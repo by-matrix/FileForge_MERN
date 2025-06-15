@@ -2,7 +2,11 @@ const express = require("express");
 const app = express();
 const { connectdb } = require("./config/database");
 const authRouter = require("./routes/authRouter");
+// const fileRouter = require('./routes/fileRoutes');
 const cors = require("cors");
+
+
+require('dotenv').config();
 
 app.use(cors(
   {
@@ -11,10 +15,19 @@ app.use(cors(
     credentials: true,
   }
 ));
+
+//middleware
 app.use(express.json());
+
 
 //routing
 app.use("/", authRouter);
+// app.use("/", fileRouter);
+
+
+
+
+
 
 connectdb()
   .then(() => {

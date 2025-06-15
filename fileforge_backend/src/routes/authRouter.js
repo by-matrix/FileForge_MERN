@@ -1,9 +1,13 @@
 const express = require('express');
 const User = require('../models/user'); 
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 const authRouter = express.Router();
 
-//auth API
+//auth APIs
+
+// Register API
 authRouter.post('/register', async (req, res) => {
     const { phoneNumber, password, firstName, lastName, department } = req.body;
 
@@ -13,15 +17,20 @@ authRouter.post('/register', async (req, res) => {
             return res.status(400).json({ message: 'User already exists' });
         }
 
+        // Hash the password using bcrypt with salt round 10 is genrated
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+        
+        //user interface
         const newUser = new User({
             phoneNumber,
-            password,
+            password: hashedPassword, // Store the hashed password
             firstName,
             lastName,
             department
         });
 
-         const savedUser = await newUser.save();
+        const savedUser = await newUser.save();
 
         res.status(201).json({ message: 'User registered successfully' });
     } catch (error) {
@@ -29,11 +38,54 @@ authRouter.post('/register', async (req, res) => {
     }
 });
 
-authRouter.get('/test', (req, res) => {
-  res.send('Auth router working!');
+// Login API
+
+authRouter.post('/login', async (req, res) => {
+  const { phoneNumber, password } = req.body;
+
+  try {
+    // Step 1: Check if user exists
+    const user = await User.findOne({ phoneNumber });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid phone number or password' });
+    }
+
+    // Step 2: Compare provided password with hashed password stored in DB
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(400).json({ message: 'Invalid phone number or password' });
+    }
+
+    // Step 3: Generate JWT (JSON Web Token)
+    const token = jwt.sign(
+      { userId: user._id, phoneNumber: user.phoneNumber }, // Data in the payload
+      process.env.NEED_THIS_WHY, // Secret key for signing the token (ensure it's in .env)
+      { expiresIn: '1h' }  // Expiration time (1 hour)
+    );
+
+    // Step 4: Return success response with token and user data
+    return res.status(200).json({
+      message: 'Login successful',
+      token, // The generated JWT token
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phoneNumber: user.phoneNumber,
+        department: user.department
+      }
+    });
+
+  } catch (error) {
+    console.error('Login Error:', error); // Detailed error log for debugging
+    return res.status(500).json({
+      message: 'Error logging in',
+      error: error.message || error
+    });
+  }
 });
 
 
 module.exports = authRouter;
-
-

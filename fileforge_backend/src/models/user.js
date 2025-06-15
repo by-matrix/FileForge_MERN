@@ -6,10 +6,18 @@ const userSchema = new mongoose.Schema({
     required: true,
     unique: true,
     trim: true,
+    validate: {
+      validator: function (v) {
+        return /^\d{10}$/.test(v); // Validate a 10 digit number
+      },
+      message:`Please enter the valid phone number!`,
+    },
   },
   password: {
     type: String,
     required: true,
+    unique: true,
+    trim: true,
   },
   firstName: {
     type: String,
