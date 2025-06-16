@@ -1,164 +1,72 @@
-// const express = require('express');
-// const fileRouter = express.Router();
-// const File = require('../models/file');
+const express = require("express");
+const fileRouter = express.Router();
+const File = require("../models/file");
+const User = require("../models/user");
+const jwt = require("jsonwebtoken");
+const authmiddleware = require("../middleware/authMiddleware");
 
-// // API to create a file
-// fileRouter.post('/api/files', async (req, res) => {
-//     const { fileNumber, dispatchedDate, to, currentStatus, remarks, uploadedBy } = req.body;
+// API to create a file
+fileRouter.post("/create-files", authmiddleware, async (req, res) => {
+  const { fileNumber, dispatchedDate, to, currentStatus, remarks } = req.body;
+  const uploadedBy = req.user._id; // 🟢 updated to use full user object
 
-//     if (!fileNumber || !dispatchedDate || !to || !currentStatus || !uploadedBy) {
-//         return res.status(400).json({ message: 'Missing required fields' });
-//     }
+  try {
+    const existingFile = await File.findOne({ fileNumber });
+    if (existingFile) {
+      return res
+        .status(400)
+        .json({ message: "File with this number already exists" });
+    }
 
-//     try {
-//         const newFile = new File({
-//             fileNumber,
-//             dispatchedDate,
-//             to,
-//             currentStatus,
-//             remarks,
-//             uploadedBy
-//         });
+    // if this is not entred dont go any futher
+    if (
+      !fileNumber ||
+      !dispatchedDate ||
+      !to ||
+      !currentStatus ||
+      !uploadedBy
+    ) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
 
-//         const savedFile = await newFile.save();
+    const newFile = new File({
+      fileNumber,
+      dispatchedDate,
+      to,
+      currentStatus,
+      remarks,
+      uploadedBy, // Assuming the user ID is in the decoded token
+    });
 
-//         res.status(201).json({ message: 'File created successfully', file: savedFile });
-//     } catch (error) {
-//         res.status(500).json({ message: 'Error creating file', error });
-//     }
-// });
+    const savedFile = await newFile.save();
 
-// module.exports = fileRouter;
+    res.status(201).json({
+      message: "New File Created Successfully",
+    });
+  } catch (error) {
+    console.error("Error creating file:");
+    res.status(500).json({
+      message: "Error Creating the file",
+      error,
+    });
+  }
+});
 
+// API to get all files
+fileRouter.get("/get-files", authmiddleware, async (req, res) => {
+  const toyou = req.user._id; // 🟢 updated to use full user object
 
+  try {
+    const files = await File.find({ to: toyou }).populate(
+      "uploadedBy",
+      "firstName lastName"
+    );
+    res.status(200).json(files);
 
+  } catch (error) {
+    console.error("Error fetching files:", error);
+    res.status(500).json({ message: "Error fetching files", error });
+  }
+});
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// // const express = require('express');
-// // const File = require('../models/file') 
-
-// // const fileRouter = express.Router();
-
-// // //api to create a file
-// // fileRouter.post('/files', async (req, res) => {
-// //     const {
-// //       fileNumber,
-// //       dispatchedDate,
-// //       to,
-// //       currentStatus,
-// //       remarks,
-// //       uploadedBy,
-// //     } = req.body;
-
-// //     try {
-// //       // Create a new file instance
-// //       const newFile = new File({
-// //         fileNumber,
-// //         dispatchedDate,
-// //         to,
-// //         currentStatus,
-// //         remarks,
-// //         uploadedBy,
-// //       });
-
-// //       // Save the file to the database
-// //       const savedFile = await newFile.save();
-
-// //       res
-// //         .status(201)
-// //         .json({ message: "File created successfully", file: savedFile });
-// //     } catch (error) {
-// //       res.status(500).json({ message: "Error creating file", error });
-// //     }
-// // });
-
-
-// // module.exports = fileRouter;
-// // // api to get all files
-// // router.get('/files', async (req, res) => {
-// //     try {
-// //         // Fetch all files from the database
-// //         const files = await File.find().populate('uploadedBy', 'firstName lastName');
-
-// //         res.status(200).json(files);
-// //     } catch (error) {
-// //         res.status(500).json({ message: 'Error fetching files', error });
-// //     }
-// // });
-
-// // // api to get a file by fileNumber
-// // router.get('/files/:fileNumber', async (req, res) => {
-// //     const { fileNumber } = req.params;
-
-// //     try {
-// //         // Fetch the file by fileNumber
-// //         const file = await File.findOne({ fileNumber }).populate('uploadedBy', 'firstName lastName');
-
-// //         if (!file) {
-// //             return res.status(404).json({ message: 'File not found' });
-// //         }
-
-// //         res.status(200).json(file);
-// //     } catch (error) {
-// //         res.status(500).json({ message: 'Error fetching file', error });
-// //     }
-// // });
-
-// // //api to update a file
-// // router.put('/files/:fileNumber', async (req, res) => {
-// //     const { fileNumber } = req.params;
-// //     const { dispatchedDate, to, currentStatus, remarks } = req.body;
-
-// //     try {
-// //         // Update the file by fileNumber
-// //         const updatedFile = await File.findOneAndUpdate(
-// //             { fileNumber },
-// //             { dispatchedDate, to, currentStatus, remarks },
-// //             { new: true }
-// //         ).populate('uploadedBy', 'firstName lastName');
-
-// //         if (!updatedFile) {
-// //             return res.status(404).json({ message: 'File not found' });
-// //         }
-
-// //         res.status(200).json({ message: 'File updated successfully', file: updatedFile });
-// //     } catch (error) {
-// //         res.status(500).json({ message: 'Error updating file', error });
-// //     }
-// // });
-// // // api to delete a file
-// // router.delete('/files/:fileNumber', async (req, res) => {
-// //     const { fileNumber } = req.params;
-
-// //     try {
-// //         // Delete the file by fileNumber
-// //         const deletedFile = await File.findOneAndDelete({ fileNumber });
-
-// //         if (!deletedFile) {
-// //             return res.status(404).json({ message: 'File not found' });
-// //         }
-
-// //         res.status(200).json({ message: 'File deleted successfully' });
-// //     } catch (error) {
-// //         res.status(500).json({ message: 'Error deleting file', error });
-// //     }
-// // });
-
-
+module.exports = fileRouter;

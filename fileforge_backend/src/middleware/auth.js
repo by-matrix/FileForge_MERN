@@ -1,1 +1,0 @@
-// middleware for authentication, when ever a user tries to access a protected route, this middleware will check if the user is authenticated 

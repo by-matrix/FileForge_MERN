@@ -2,8 +2,12 @@ const express = require("express");
 const app = express();
 const { connectdb } = require("./config/database");
 const authRouter = require("./routes/authRouter");
-// const fileRouter = require('./routes/fileRoutes');
+const fileRouter = require("./routes/fileRouter");
 const cors = require("cors");
+const cookieParser = require('cookie-parser');
+
+
+
 
 
 require('dotenv').config();
@@ -19,10 +23,12 @@ app.use(cors(
 //middleware
 app.use(express.json());
 
+app.use(cookieParser());
+
 
 //routing
 app.use("/", authRouter);
-// app.use("/", fileRouter);
+app.use("/", fileRouter);
 
 
 

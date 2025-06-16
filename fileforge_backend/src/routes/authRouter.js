@@ -59,11 +59,13 @@ authRouter.post('/login', async (req, res) => {
     }
 
     // Step 3: Generate JWT (JSON Web Token)
-    const token = jwt.sign(
-      { userId: user._id, phoneNumber: user.phoneNumber }, // Data in the payload
+    const token = await jwt.sign(
+      { _id: user._id, phoneNumber: user.phoneNumber }, // Data in the payload
       process.env.NEED_THIS_WHY, // Secret key for signing the token (ensure it's in .env)
       { expiresIn: '1h' }  // Expiration time (1 hour)
     );
+
+      res.cookie("token", token)
 
     // Step 4: Return success response with token and user data
     return res.status(200).json({
@@ -87,5 +89,12 @@ authRouter.post('/login', async (req, res) => {
   }
 });
 
+// // logout API
+// authRouter.post('/logout', (req, res) => {
+//     // Invalidate the token on the client side
+//     // This can be done by clearing the token from cookies or local storage
+//     res.clearCookie('token'); // Assuming you're using cookies to store the token
+//     res.status(200).json({ message: 'Logged out successfully' });
+// });
 
 module.exports = authRouter;
