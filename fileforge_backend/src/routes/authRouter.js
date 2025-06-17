@@ -89,12 +89,12 @@ authRouter.post('/login', async (req, res) => {
   }
 });
 
-// // logout API
-// authRouter.post('/logout', (req, res) => {
-//     // Invalidate the token on the client side
-//     // This can be done by clearing the token from cookies or local storage
-//     res.clearCookie('token'); // Assuming you're using cookies to store the token
-//     res.status(200).json({ message: 'Logged out successfully' });
-// });
+// logout API
+authRouter.post('/logout', (req, res) => {
+    // Invalidate the token on the client side
+    // This can be done by clearing the token from cookies or local storage
+    res.clearCookie('token'); // Assuming you're using cookies to store the token
+    res.status(200).json({ message: 'Logged out successfully' });
+});
 
 module.exports = authRouter;
