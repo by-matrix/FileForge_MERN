@@ -97,4 +97,13 @@ authRouter.post('/logout', (req, res) => {
     res.status(200).json({ message: 'Logged out successfully' });
 });
 
+
+const authMiddleware = require("../middleware/authMiddleware"); // ✅ Already likely present
+
+// 🆕 Add this route at the bottom
+authRouter.get("/me", authMiddleware, (req, res) => {
+  res.json(req.user);
+});
+
+
 module.exports = authRouter;

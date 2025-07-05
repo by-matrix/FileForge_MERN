@@ -152,7 +152,6 @@ fileRouter.get(
 // API to get all files in the system
 // This endpoint is for admin users to view all files
 // It is protected by an admin middleware
-
 fileRouter.get("/get-all-files", authmiddleware, async (req, res) => {
   const authMiddleware = require("../middleware/authMiddleware.js");
   try {
