@@ -148,14 +148,106 @@ const EditFile = () => {
     setError('');
 
     try {
-      await api.put(`/files/${id}`, {
+      console.log('=== SAVE DEBUG INFO ===');
+      console.log('File ID:', id);
+      console.log('Form data being sent:', formData);
+      
+      const updateData = {
         ...formData,
         dispatchedDate: new Date(formData.dispatchedDate).toISOString()
-      });
+      };
       
+      console.log('Update data with ISO date:', updateData);
+      
+      let response;
+      let success = false;
+      
+      // Try different HTTP methods and endpoints
+      const methodsToTry = [
+        { method: 'put', endpoint: `/files/${id}` },
+        { method: 'patch', endpoint: `/files/${id}` },
+        { method: 'post', endpoint: `/files/${id}/update` },
+        { method: 'put', endpoint: `/files/update/${id}` }
+      ];
+      
+      for (const { method, endpoint } of methodsToTry) {
+        try {
+          console.log(`Trying ${method.toUpperCase()} request to:`, endpoint);
+          response = await api[method](endpoint, updateData);
+          console.log(`${method.toUpperCase()} response:`, response.data);
+          success = true;
+          break;
+        } catch (error) {
+          console.log(`${method.toUpperCase()} failed with status:`, error.response?.status);
+          if (error.response?.status === 404 || error.response?.status === 405) {
+            continue; // Try next method
+          } else {
+            throw error; // Other errors should be thrown
+          }
+        }
+      }
+      
+      // Temporary workaround: If no update endpoint exists, 
+      // you might need to work with your existing endpoints
+      // This is just a placeholder - replace with your actual update logic
+      
+      if (!success) {
+        // Check if your backend has a different update pattern
+        console.log('Trying alternative update methods...');
+        
+        // Method 1: Check if there's a general files endpoint that accepts updates
+        try {
+          response = await api.post('/files', { ...updateData, id: id });
+          console.log('POST to /files with ID response:', response.data);
+          success = true;
+        } catch (error) {
+          console.log('POST to /files failed:', error.response?.status);
+        }
+        
+        // Method 2: If still no success, you might need to implement the backend endpoint
+        if (!success) {
+          throw new Error(`No update endpoint found. Please add one of these endpoints to your backend:
+            - PUT /api/files/${id}
+            - PATCH /api/files/${id}
+            - POST /api/files/${id}/update
+            - PUT /api/files/update/${id}`);
+        }
+      }
+      
+      // Show success message
+      alert('File updated successfully!');
       navigate('/files');
     } catch (error) {
-      setError(error.response?.data?.detail || 'Error updating file');
+      console.error('Error updating file:', error);
+      console.error('Error response:', error.response);
+      
+      // Try to get more specific error message
+      let errorMessage = 'Error updating file';
+      
+      if (error.response) {
+        console.log('Error status:', error.response.status);
+        console.log('Error data:', error.response.data);
+        
+        if (error.response.status === 404) {
+          errorMessage = 'Update endpoint not found. Your backend needs a PUT /api/files/:id endpoint.';
+        } else if (error.response.status === 405) {
+          errorMessage = 'Method not allowed. Your backend might not support the HTTP method used.';
+        } else if (error.response.status === 403) {
+          errorMessage = 'You do not have permission to update this file.';
+        } else if (error.response.status === 400) {
+          errorMessage = error.response.data?.detail || error.response.data?.message || 'Invalid data provided for update.';
+        } else if (error.response.data?.detail) {
+          errorMessage = error.response.data.detail;
+        } else if (error.response.data?.message) {
+          errorMessage = error.response.data.message;
+        }
+      } else if (error.request) {
+        errorMessage = 'Network error. Please check your connection.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setSaving(false);
     }

@@ -1,4 +1,4 @@
-// 1. Updated fileController.js - Fixed response structure
+// Updated fileController.js with updateFile function
 const { v4: uuidv4 } = require('uuid');
 const File = require('../models/File');
 const Notification = require('../models/Notification');
@@ -37,6 +37,150 @@ exports.createFile = async (req, res) => {
   }
 };
 
+// ADD THIS: Update file function
+exports.updateFile = async (req, res) => {
+  try {
+    const fileId = req.params.id;
+    const updateData = req.body;
+    
+    console.log('Updating file:', fileId);
+    console.log('Update data:', updateData);
+    
+    // Check if user is authenticated
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    // Find the file first to check permissions
+    const existingFile = await File.findById(fileId);
+    if (!existingFile) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    // Check if user has permission to update (either uploader or assigned user)
+    if (existingFile.uploadedBy !== req.user.id && existingFile.to !== req.user.id) {
+      return res.status(403).json({ error: 'You do not have permission to update this file' });
+    }
+
+    // Update the file
+    const updatedFile = await File.findByIdAndUpdate(
+      fileId,
+      updateData,
+      { 
+        new: true,           // Return updated document
+        runValidators: true  // Run schema validators
+      }
+    );
+
+    // Create notification if status changed
+    if (updateData.currentStatus && updateData.currentStatus !== existingFile.currentStatus) {
+      const notification = new Notification({
+        id: uuidv4(),
+        userId: existingFile.uploadedBy,
+        type: 'file_updated',
+        message: `File ${existingFile.fileNumber} status updated to ${updateData.currentStatus}`,
+        fileId: fileId
+      });
+      await notification.save();
+    }
+
+    // Get uploader name for response
+    const uploader = await User.findOne({ id: updatedFile.uploadedBy });
+    const assignedUser = await User.findOne({ id: updatedFile.to });
+    
+    const fileWithNames = {
+      ...updatedFile.toObject(),
+      uploadedByName: uploader?.name || 'Unknown',
+      assignedToName: assignedUser?.name || 'Unknown'
+    };
+
+    res.json({ 
+      message: 'File updated successfully',
+      file: fileWithNames 
+    });
+    
+  } catch (error) {
+    console.error('Update file error:', error);
+    res.status(500).json({ 
+      error: 'Server error',
+      details: error.message 
+    });
+  }
+};
+
+// Get single file by ID
+exports.getFileById = async (req, res) => {
+  try {
+    const fileId = req.params.id;
+    
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const file = await File.findById(fileId);
+    if (!file) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    // Check permissions
+    if (file.uploadedBy !== req.user.id && file.to !== req.user.id) {
+      return res.status(403).json({ error: 'You do not have permission to view this file' });
+    }
+
+    const uploader = await User.findOne({ id: file.uploadedBy });
+    const assignedUser = await User.findOne({ id: file.to });
+    
+    const fileWithNames = {
+      ...file.toObject(),
+      uploadedByName: uploader?.name || 'Unknown',
+      assignedToName: assignedUser?.name || 'Unknown'
+    };
+
+    res.json(fileWithNames);
+  } catch (error) {
+    console.error('Get file error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// Delete file
+exports.deleteFile = async (req, res) => {
+  try {
+    const fileId = req.params.id;
+    
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const file = await File.findById(fileId);
+    if (!file) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    // Check permissions (only uploader can delete)
+    if (file.uploadedBy !== req.user.id) {
+      return res.status(403).json({ error: 'You do not have permission to delete this file' });
+    }
+
+    await File.findByIdAndDelete(fileId);
+    
+    // Create notification
+    const notification = new Notification({
+      id: uuidv4(),
+      userId: file.to,
+      type: 'file_deleted',
+      message: `File ${file.fileNumber} has been deleted`,
+      fileId: fileId
+    });
+    await notification.save();
+
+    res.json({ message: 'File deleted successfully' });
+  } catch (error) {
+    console.error('Delete file error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
 // Fixed getFiles - Returns array directly (like frontend expects)
 exports.getFiles = async (req, res) => {
   try {
@@ -47,7 +191,6 @@ exports.getFiles = async (req, res) => {
     console.log('Fetching files for user:', req.user.id);
     
     const files = await File.find({ to: req.user.id })
-      .populate('uploadedBy', 'name') // Populate user name
       .sort({ uploadDate: -1 });
     
     // Add uploadedByName field for each file
@@ -69,7 +212,7 @@ exports.getFiles = async (req, res) => {
   }
 };
 
-// New: Get files uploaded by current user
+// Get files uploaded by current user
 exports.getUploadedFiles = async (req, res) => {
   try {
     if (!req.user || !req.user.id) {
@@ -94,7 +237,7 @@ exports.getUploadedFiles = async (req, res) => {
   }
 };
 
-// New: Get all files (admin only)
+// Get all files (admin only)
 exports.getAllFiles = async (req, res) => {
   try {
     if (!req.user || !req.user.id) {
