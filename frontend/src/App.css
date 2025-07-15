@@ -1,0 +1,121 @@
+/* App.css */
+.App {
+    min-height: 100vh;
+    background-color: #f9fafb;
+}
+
+/* Header styles for login/register pages */
+.App-header {
+    background-color: #ffffff;
+    padding: 2rem;
+    color: #1f2937;
+    text-align: center;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.App-link {
+    color: #4f46e5;
+    text-decoration: none;
+}
+
+.App-link:hover {
+    color: #3730a3;
+}
+
+/* Government theme colors */
+:root {
+    --primary-color: #1e40af;
+    --secondary-color: #374151;
+    --success-color: #059669;
+    --warning-color: #d97706;
+    --error-color: #dc2626;
+    --info-color: #0284c7;
+}
+
+/* Custom button styles for government theme */
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #1d4ed8;
+    border-color: #1d4ed8;
+}
+
+.btn-secondary {
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #4b5563;
+    border-color: #4b5563;
+}
+
+/* Form input focus styles */
+.form-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+}
+
+/* Status indicator styles */
+.status-pending {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.status-in-progress {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.status-completed {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.status-reject {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.status-archived {
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
+.status-urgent {
+    background-color: #fee2e2;
+    color: #991b1b;
+    font-weight: 600;
+}
+
+/* Responsive design utilities */
+@media (max-width: 768px) {
+    .mobile-hidden {
+        display: none;
+    }
+    
+    .mobile-full {
+        width: 100%;
+    }
+    
+    .mobile-stack {
+        flex-direction: column;
+    }
+}
+
+/* Print styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .print-only {
+        display: block !important;
+    }
+}
