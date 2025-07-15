@@ -9,7 +9,7 @@ const FileManager = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [currentView, setCurrentView] = useState('assigned'); // 'assigned', 'uploaded', 'all'
+  const [currentView, setCurrentView] = useState('assigned');
 
   const fileStatuses = [
     'Pending',
@@ -32,17 +32,41 @@ const FileManager = () => {
       if (currentView === 'uploaded') {
         endpoint = '/files/uploaded';
       } else if (currentView === 'all' && user?.role === 'admin') {
-        endpoint = '/files/all'; // /files
+        endpoint = '/files/all';
       }
 
       const params = new URLSearchParams();
       if (search) params.append('search', search);
       if (statusFilter) params.append('status', statusFilter);
 
+      console.log('Fetching from:', `${endpoint}?${params}`);
+      
       const response = await api.get(`${endpoint}?${params}`);
-      setFiles(response.data);
+      
+      console.log('API Response:', response.data);
+      
+      // Handle response - should be array directly
+      const filesData = Array.isArray(response.data) ? response.data : [];
+      
+      // Apply client-side filtering (since backend doesn't handle search/filter params yet)
+      let filteredFiles = filesData;
+      
+      if (search) {
+        filteredFiles = filteredFiles.filter(file => 
+          file.fileNumber.toLowerCase().includes(search.toLowerCase()) ||
+          (file.remarks && file.remarks.toLowerCase().includes(search.toLowerCase()))
+        );
+      }
+      
+      if (statusFilter) {
+        filteredFiles = filteredFiles.filter(file => file.currentStatus === statusFilter);
+      }
+      
+      setFiles(filteredFiles);
     } catch (error) {
       console.error('Error fetching files:', error);
+      // Set empty array on error
+      setFiles([]);
     } finally {
       setLoading(false);
     }
@@ -95,6 +119,13 @@ const FileManager = () => {
         <h1 className="text-3xl font-bold text-gray-900">File Management</h1>
         <p className="text-gray-600 mt-2">
           Manage and track your files
+        </p>
+      </div>
+
+      {/* Debug Info */}
+      <div className="mb-4 p-4 bg-gray-100 rounded-lg">
+        <p className="text-sm">
+          <strong>Debug Info:</strong> User ID: {user?.id}, Current View: {currentView}, Files Count: {files.length}
         </p>
       </div>
 
@@ -177,6 +208,11 @@ const FileManager = () => {
         ) : files.length === 0 ? (
           <div className="py-12 text-center">
             <p className="text-gray-500">No files found</p>
+            <p className="text-sm text-gray-400 mt-2">
+              {currentView === 'assigned' ? 'No files assigned to you' : 
+               currentView === 'uploaded' ? 'No files uploaded by you' : 
+               'No files in the system'}
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">

@@ -35,12 +35,87 @@ const EditFile = () => {
 
   const fetchFile = async () => {
     try {
-      // We need to get the file from the files list since we don't have a single file endpoint
-      const response = await api.get('/files');
-      const foundFile = response.data.find(f => f.id === id);
+      console.log('=== DEBUG INFO ===');
+      console.log('User:', user);
+      console.log('Fetching file with ID:', id, 'Type:', typeof id);
+      
+      // Try all possible endpoints to find the file
+      let allFiles = [];
+      
+      // Get assigned files
+      try {
+        const assignedResponse = await api.get('/files');
+        console.log('Assigned files response:', assignedResponse.data);
+        if (Array.isArray(assignedResponse.data)) {
+          allFiles = [...allFiles, ...assignedResponse.data];
+        }
+      } catch (error) {
+        console.error('Error fetching assigned files:', error);
+      }
+      
+      // Get uploaded files
+      try {
+        const uploadedResponse = await api.get('/files/uploaded');
+        console.log('Uploaded files response:', uploadedResponse.data);
+        if (Array.isArray(uploadedResponse.data)) {
+          allFiles = [...allFiles, ...uploadedResponse.data];
+        }
+      } catch (error) {
+        console.error('Error fetching uploaded files:', error);
+      }
+      
+      // Get all files if admin
+      if (user?.role === 'admin') {
+        try {
+          const allResponse = await api.get('/files/all');
+          console.log('All files response:', allResponse.data);
+          if (Array.isArray(allResponse.data)) {
+            allFiles = [...allFiles, ...allResponse.data];
+          }
+        } catch (error) {
+          console.error('Error fetching all files:', error);
+        }
+      }
+      
+      // Remove duplicates based on ID
+      const uniqueFiles = allFiles.filter((file, index, self) => 
+        index === self.findIndex(f => f.id === file.id)
+      );
+      
+      console.log('All unique files:', uniqueFiles);
+      console.log('File IDs available:', uniqueFiles.map(f => ({ id: f.id, type: typeof f.id })));
+      
+      // Try both string and number comparison
+      const fileIdString = id;
+      const fileIdNumber = parseInt(id, 10);
+      
+      console.log('Looking for file with ID:', fileIdString, '(string) or', fileIdNumber, '(number)');
+      
+      const foundFile = uniqueFiles.find(f => {
+        console.log('Comparing file:', f.id, 'Type:', typeof f.id, 'with', fileIdString, '/', fileIdNumber);
+        return f.id === fileIdString || f.id === fileIdNumber || f.id.toString() === fileIdString;
+      });
+      
+      console.log('Found file:', foundFile);
       
       if (!foundFile) {
-        setError('File not found');
+        console.log('File not found in any endpoint');
+        setError(`File not found. Available file IDs: ${uniqueFiles.map(f => f.id).join(', ')}`);
+        return;
+      }
+
+      // Check permissions
+      const hasPermission = user?.role === 'admin' || foundFile.to === user?.id || foundFile.uploadedBy === user?.id;
+      console.log('Permission check:', {
+        userRole: user?.role,
+        fileTo: foundFile.to,
+        fileUploadedBy: foundFile.uploadedBy,
+        userId: user?.id,
+        hasPermission
+      });
+
+      if (!hasPermission) {
+        setError('You do not have permission to view this file');
         return;
       }
 
@@ -53,6 +128,7 @@ const EditFile = () => {
         remarks: foundFile.remarks || ''
       });
     } catch (error) {
+      console.error('Error fetching file:', error);
       setError(error.response?.data?.detail || 'Error fetching file');
     } finally {
       setLoading(false);
@@ -86,7 +162,21 @@ const EditFile = () => {
   };
 
   const canEdit = () => {
-    return user?.role === 'admin' || file?.to === user?.id;
+    if (!file || !user) return false;
+    
+    const isAdmin = user.role === 'admin';
+    const isAssignedTo = file.to === user.id;
+    const isUploadedBy = file.uploadedBy === user.id;
+    
+    console.log('Edit permission check:', {
+      isAdmin,
+      isAssignedTo,
+      isUploadedBy,
+      fileData: { to: file.to, uploadedBy: file.uploadedBy },
+      userData: { id: user.id, role: user.role }
+    });
+    
+    return isAdmin || isAssignedTo || isUploadedBy;
   };
 
   const getStatusColor = (status) => {
@@ -124,6 +214,14 @@ const EditFile = () => {
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
           {error}
+        </div>
+        <div className="mt-4">
+          <button
+            onClick={() => navigate('/files')}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+          >
+            Back to Files
+          </button>
         </div>
       </div>
     );
