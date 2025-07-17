@@ -3,6 +3,16 @@ const router = express.Router();
 const notificationController = require('../controllers/notificationController');
 const { auth } = require('../middleware/auth');
 
+// Get all notifications for the current user
 router.get('/', auth, notificationController.getNotifications);
+
+// Mark a specific notification as read
+router.put('/:notificationId/read', auth, notificationController.markAsRead);
+
+// Mark all notifications as read
+router.put('/mark-all-read', auth, notificationController.markAllAsRead);
+
+// Delete a specific notification
+router.delete('/:notificationId', auth, notificationController.deleteNotification);
 
 module.exports = router;

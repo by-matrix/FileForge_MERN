@@ -37,10 +37,20 @@ exports.login = async (req, res) => {
 
     const token = createToken(user.id);
     const { id, firstName, lastName, department, role } = user;
+    
+    // FIXED: Include name field for consistency
     res.json({
       message: 'Login successful',
       token,
-      user: { id, phoneNumber, firstName, lastName, department, role }
+      user: { 
+        id, 
+        phoneNumber, 
+        firstName, 
+        lastName, 
+        name: `${firstName} ${lastName}`.trim(), // Add name field
+        department, 
+        role 
+      }
     });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
@@ -53,5 +63,15 @@ exports.logout = (req, res) => {
 
 exports.getMe = async (req, res) => {
   const { id, phoneNumber, firstName, lastName, department, role } = req.user;
-  res.json({ id, phoneNumber, firstName, lastName, department, role });
+  
+  // FIXED: Include name field for consistency
+  res.json({ 
+    id, 
+    phoneNumber, 
+    firstName, 
+    lastName, 
+    name: `${firstName} ${lastName}`.trim(), // Add name field
+    department, 
+    role 
+  });
 };

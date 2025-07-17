@@ -4,6 +4,7 @@ const User = require('../models/User');
 exports.getStats = async (req, res) => {
   try {
     if (req.user.role === 'admin') {
+      // Admin stats
       const totalFiles = await File.countDocuments();
       const totalUsers = await User.countDocuments();
 
@@ -14,21 +15,35 @@ exports.getStats = async (req, res) => {
         statusStats[status] = await File.countDocuments({ currentStatus: status });
       }
 
-      return res.json({ totalFiles, totalUsers, statusBreakdown: statusStats });
+      return res.json({ 
+        total_files: totalFiles,
+        total_users: totalUsers, 
+        status_breakdown: statusStats 
+      });
     } else {
+      // Regular user stats
       const assignedFiles = await File.countDocuments({ to: req.user.id });
       const uploadedFiles = await File.countDocuments({ uploadedBy: req.user.id });
 
       const statuses = ['Pending', 'In Progress', 'Completed', 'Reject', 'Archived', 'Urgent'];
       const statusStats = {};
 
+      // For regular users, show status breakdown for files assigned to them
       for (let status of statuses) {
-        statusStats[status] = await File.countDocuments({ to: req.user.id, currentStatus: status });
+        statusStats[status] = await File.countDocuments({ 
+          to: req.user.id, 
+          currentStatus: status 
+        });
       }
 
-      return res.json({ assignedFiles, uploadedFiles, statusBreakdown: statusStats });
+      return res.json({ 
+        assigned_files: assignedFiles,
+        uploaded_files: uploadedFiles, 
+        status_breakdown: statusStats 
+      });
     }
   } catch (err) {
+    console.error('Error fetching stats:', err);
     res.status(500).json({ error: 'Server error' });
   }
 };
