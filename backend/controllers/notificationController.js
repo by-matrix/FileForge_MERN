@@ -3,7 +3,7 @@ const Notification = require('../models/Notification');
 exports.getNotifications = async (req, res) => {
   try {
     const notifications = await Notification.find({ userId: req.user.id })
-      .sort({ createdAt: -1 }); // Sort by newest first
+      .sort({ createdAt: -1 }); //new file first
     res.json(notifications);
   } catch (err) {
     console.error('Error fetching notifications:', err);
@@ -16,7 +16,7 @@ exports.markAsRead = async (req, res) => {
     const { notificationId } = req.params;
     const userId = req.user.id;
 
-    // Find the notification and ensure it belongs to the current user
+    // Find the notification and check it, if it belongs to the current user
     const notification = await Notification.findOne({ 
       id: notificationId, 
       userId: userId 
@@ -26,7 +26,7 @@ exports.markAsRead = async (req, res) => {
       return res.status(404).json({ error: 'Notification not found' });
     }
 
-    // Update the notification to mark as read
+    //notification to mark as read
     const updatedNotification = await Notification.findOneAndUpdate(
       { id: notificationId, userId: userId },
       { read: true },
@@ -44,13 +44,13 @@ exports.markAllAsRead = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // Update all unread notifications for the user
+    //notifications for the user unread
     await Notification.updateMany(
       { userId: userId, read: false },
       { read: true }
     );
 
-    // Return updated notifications
+    //updated notifications
     const notifications = await Notification.find({ userId: userId })
       .sort({ createdAt: -1 });
     

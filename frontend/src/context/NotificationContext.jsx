@@ -45,11 +45,40 @@ export const NotificationProvider = ({ children }) => {
     }
   };
 
+  //delete function
+  const deleteNotification = async (notificationId) => {
+    try {
+      await api.delete(`/notifications/${notificationId}`);
+      setNotifications(prev => 
+        prev.filter(notification => notification.id !== notificationId)
+      );
+      // Update unread count if the deleted notification was unread
+      const deletedNotification = notifications.find(n => n.id === notificationId);
+      if (deletedNotification && !deletedNotification.read) {
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      throw error;
+    }
+  };
+
+  //mark all as read function
+  const markAllAsRead = async () => {
+    try {
+      const response = await api.put('/notifications/mark-all-read');
+      setNotifications(response.data);
+      setUnreadCount(0);
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+    }
+  };
+
   useEffect(() => {
     fetchNotifications();
     
     // Poll for new notifications every 30 seconds
-    const interval = setInterval(fetchNotifications, 30000);
+    const interval = setInterval(fetchNotifications, 3000);
     
     return () => clearInterval(interval);
   }, [user]);
@@ -58,7 +87,9 @@ export const NotificationProvider = ({ children }) => {
     notifications,
     unreadCount,
     fetchNotifications,
-    markAsRead
+    markAsRead,
+    deleteNotification,
+    markAllAsRead
   };
 
   return (

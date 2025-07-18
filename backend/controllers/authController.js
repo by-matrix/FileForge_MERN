@@ -38,7 +38,7 @@ exports.login = async (req, res) => {
     const token = createToken(user.id);
     const { id, firstName, lastName, department, role } = user;
     
-    // FIXED: Include name field for consistency
+
     res.json({
       message: 'Login successful',
       token,
@@ -47,7 +47,7 @@ exports.login = async (req, res) => {
         phoneNumber, 
         firstName, 
         lastName, 
-        name: `${firstName} ${lastName}`.trim(), // Add name field
+        name: `${firstName} ${lastName}`.trim(),// name 
         department, 
         role 
       }
@@ -64,13 +64,13 @@ exports.logout = (req, res) => {
 exports.getMe = async (req, res) => {
   const { id, phoneNumber, firstName, lastName, department, role } = req.user;
   
-  // FIXED: Include name field for consistency
+
   res.json({ 
     id, 
     phoneNumber, 
     firstName, 
     lastName, 
-    name: `${firstName} ${lastName}`.trim(), // Add name field
+    name: `${firstName} ${lastName}`.trim(), 
     department, 
     role 
   });

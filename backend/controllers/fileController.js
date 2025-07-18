@@ -1,10 +1,10 @@
-// Updated fileController.js with proper user name handling and limit parameter
+// user name handling and limit parameter is added
 const { v4: uuidv4 } = require('uuid');
 const File = require('../models/File');
 const Notification = require('../models/Notification');
 const User = require('../models/User');
 
-// Helper function to get user display name
+// user display name
 const getUserDisplayName = (user) => {
   if (!user) return 'Unknown';
   return `${user.firstName} ${user.lastName}`.trim() || user.phoneNumber || 'Unknown';
@@ -43,7 +43,7 @@ exports.createFile = async (req, res) => {
   }
 };
 
-// FIXED: Update file function with proper error handling
+// Update file function
 exports.updateFile = async (req, res) => {
   try {
     const fileId = req.params.id;
@@ -52,18 +52,18 @@ exports.updateFile = async (req, res) => {
     console.log('Updating file:', fileId);
     console.log('Update data:', updateData);
     
-    // Check if user is authenticated
+    //check user is authenticated
     if (!req.user || !req.user.id) {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    // Find the file first to check permissions
+    // check file for permissions
     const existingFile = await File.findOne({ id: fileId });
     if (!existingFile) {
       return res.status(404).json({ error: 'File not found' });
     }
 
-    // Check if user has permission to update (admin, uploader, or assigned user)
+    // admin has permission to update (admin, uploader, or assigned user)
     const hasPermission = req.user.role === 'admin' || 
                          existingFile.uploadedBy === req.user.id || 
                          existingFile.to === req.user.id;
@@ -72,13 +72,13 @@ exports.updateFile = async (req, res) => {
       return res.status(403).json({ error: 'You do not have permission to update this file' });
     }
 
-    // Update the file using the custom id field
+    // Update the file
     const updatedFile = await File.findOneAndUpdate(
       { id: fileId },
       updateData,
       { 
-        new: true,           // Return updated document
-        runValidators: true  // Run schema validators
+        new: true,           
+        runValidators: true  
       }
     );
 
@@ -86,7 +86,7 @@ exports.updateFile = async (req, res) => {
       return res.status(404).json({ error: 'File not found during update' });
     }
 
-    // Create notification if status changed
+    //notification if status changed
     if (updateData.currentStatus && updateData.currentStatus !== existingFile.currentStatus) {
       const notification = new Notification({
         id: uuidv4(),
@@ -98,7 +98,7 @@ exports.updateFile = async (req, res) => {
       await notification.save();
     }
 
-    // Get uploader and assigned user names
+    //assigned user names
     const uploader = await User.findOne({ id: updatedFile.uploadedBy });
     const assignedUser = await User.findOne({ id: updatedFile.to });
     
@@ -122,7 +122,7 @@ exports.updateFile = async (req, res) => {
   }
 };
 
-// FIXED: Get single file by ID
+//Get single file by id
 exports.getFileById = async (req, res) => {
   try {
     const fileId = req.params.id;
@@ -136,7 +136,7 @@ exports.getFileById = async (req, res) => {
       return res.status(404).json({ error: 'File not found' });
     }
 
-    // Check permissions (admin, uploader, or assigned user)
+    //permissions (admin, uploader or assigned user)
     const hasPermission = req.user.role === 'admin' || 
                          file.uploadedBy === req.user.id || 
                          file.to === req.user.id;
@@ -161,7 +161,7 @@ exports.getFileById = async (req, res) => {
   }
 };
 
-// FIXED: Delete file
+//Delete file
 exports.deleteFile = async (req, res) => {
   try {
     const fileId = req.params.id;
@@ -175,7 +175,7 @@ exports.deleteFile = async (req, res) => {
       return res.status(404).json({ error: 'File not found' });
     }
 
-    // Check permissions (admin or uploader)
+    //permissions for (admin or uploader)
     const hasPermission = req.user.role === 'admin' || file.uploadedBy === req.user.id;
 
     if (!hasPermission) {
@@ -184,7 +184,7 @@ exports.deleteFile = async (req, res) => {
 
     await File.findOneAndDelete({ id: fileId });
     
-    // Create notification
+    //notification
     const notification = new Notification({
       id: uuidv4(),
       userId: file.to,
@@ -201,7 +201,7 @@ exports.deleteFile = async (req, res) => {
   }
 };
 
-// UPDATED: Get files with limit parameter support for dashboard
+//Get files with limit parameter
 exports.getFiles = async (req, res) => {
   try {
     if (!req.user || !req.user.id) {
@@ -210,20 +210,19 @@ exports.getFiles = async (req, res) => {
 
     console.log('Fetching files for user:', req.user.id);
     
-    // Handle limit parameter for dashboard recent files
+
     const limit = req.query.limit ? parseInt(req.query.limit) : undefined;
     
     let query = File.find({ to: req.user.id })
       .sort({ uploadDate: -1 });
     
-    // Apply limit if provided
     if (limit) {
       query = query.limit(limit);
     }
     
     const files = await query;
     
-    // Add uploadedByName field for each file
+    //uploadedByName section added for all file
     const filesWithNames = await Promise.all(files.map(async (file) => {
       const uploader = await User.findOne({ id: file.uploadedBy });
       return {
@@ -241,7 +240,7 @@ exports.getFiles = async (req, res) => {
   }
 };
 
-// FIXED: Get files uploaded by current user
+//Get files uploaded by current user
 exports.getUploadedFiles = async (req, res) => {
   try {
     if (!req.user || !req.user.id) {
@@ -267,7 +266,7 @@ exports.getUploadedFiles = async (req, res) => {
   }
 };
 
-// UPDATED: Get all files (admin only) with limit support for dashboard
+//Get all files (admin only)
 exports.getAllFiles = async (req, res) => {
   try {
     if (!req.user || !req.user.id) {
@@ -278,13 +277,11 @@ exports.getAllFiles = async (req, res) => {
       return res.status(403).json({ error: 'Admin access required' });
     }
 
-    // Handle limit parameter for dashboard recent files
     const limit = req.query.limit ? parseInt(req.query.limit) : undefined;
     
     let query = File.find({})
       .sort({ uploadDate: -1 });
     
-    // Apply limit if provided
     if (limit) {
       query = query.limit(limit);
     }

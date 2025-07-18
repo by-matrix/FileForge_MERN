@@ -45,10 +45,10 @@ const FileManager = () => {
       
       console.log('API Response:', response.data);
       
-      // Handle response - should be array directly
+      //should be array 
       const filesData = Array.isArray(response.data) ? response.data : [];
       
-      // Apply client-side filtering (since backend doesn't handle search/filter params yet)
+      //filter
       let filteredFiles = filesData;
       
       if (search) {
@@ -65,7 +65,6 @@ const FileManager = () => {
       setFiles(filteredFiles);
     } catch (error) {
       console.error('Error fetching files:', error);
-      // Set empty array on error
       setFiles([]);
     } finally {
       setLoading(false);
@@ -118,20 +117,20 @@ const FileManager = () => {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">File Management</h1>
         <p className="text-gray-600 mt-2">
-          Manage and track your files
+          Manage and track all your files
         </p>
       </div>
 
-      {/* Debug Info */}
+      {/* Debug Info
       <div className="mb-4 p-4 bg-gray-100 rounded-lg">
         <p className="text-sm">
           <strong>Debug Info:</strong> User ID: {user?.id}, Current View: {currentView}, Files Count: {files.length}
         </p>
-      </div>
+      </div> */}
 
       {/* View Tabs */}
       <div className="mb-6">
-        <div className="border-b border-gray-200">
+        <div className="border-b border-gray-300">
           <nav className="-mb-px flex space-x-8">
             <button
               onClick={() => setCurrentView('assigned')}
@@ -267,21 +266,21 @@ const FileManager = () => {
                       {new Date(file.uploadDate).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
+                      <div className="flex space-x-5">
                         <Link
                           to={`/edit-file/${file.id}`}
                           className="text-indigo-600 hover:text-indigo-900"
                         >
-                          View
+                          Edit
                         </Link>
-                        {canEditFile(file) && (
+                        {/* {canEditFile(file) && (
                           <Link
                             to={`/edit-file/${file.id}`}
                             className="text-blue-600 hover:text-blue-900"
                           >
                             Edit
                           </Link>
-                        )}
+                        )} */}
                         {canDeleteFile(file) && (
                           <button
                             onClick={() => handleDelete(file.id)}

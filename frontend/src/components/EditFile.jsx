@@ -39,10 +39,9 @@ const EditFile = () => {
       console.log('User:', user);
       console.log('Fetching file with ID:', id, 'Type:', typeof id);
       
-      // Try all possible endpoints to find the file
       let allFiles = [];
       
-      // Get assigned files
+      //assigned files
       try {
         const assignedResponse = await api.get('/files');
         console.log('Assigned files response:', assignedResponse.data);
@@ -53,7 +52,7 @@ const EditFile = () => {
         console.error('Error fetching assigned files:', error);
       }
       
-      // Get uploaded files
+      //uploaded files
       try {
         const uploadedResponse = await api.get('/files/uploaded');
         console.log('Uploaded files response:', uploadedResponse.data);
@@ -64,7 +63,7 @@ const EditFile = () => {
         console.error('Error fetching uploaded files:', error);
       }
       
-      // Get all files if admin
+      //all files if admin
       if (user?.role === 'admin') {
         try {
           const allResponse = await api.get('/files/all');
@@ -77,7 +76,7 @@ const EditFile = () => {
         }
       }
       
-      // Remove duplicates based on ID
+      // Remove duplicates based on ID (id)
       const uniqueFiles = allFiles.filter((file, index, self) => 
         index === self.findIndex(f => f.id === file.id)
       );

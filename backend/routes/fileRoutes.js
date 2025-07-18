@@ -1,8 +1,7 @@
-// routes/fileRoutes.js
 const express = require('express');
 const router = express.Router();
 
-// Import the controller functions
+// Importfunctions
 const {
   createFile,
   getFiles,
@@ -13,28 +12,28 @@ const {
   deleteFile
 } = require('../controllers/fileController');
 
-// Import auth middleware
+//auth middleware
 const { auth } = require('../middleware/auth');
 
-// GET /api/files - Get files assigned to current user (supports ?limit=X)
+//Get files assigned to current use
 router.get('/', auth, getFiles);
 
-// GET /api/files/uploaded - Get files uploaded by current user
+//Get files uploaded by current user
 router.get('/uploaded', auth, getUploadedFiles);
 
-// GET /api/files/all - Get all files (admin only) (supports ?limit=X)
+//Get all files (admin only)
 router.get('/all', auth, getAllFiles);
 
-// GET /api/files/:id - Get single file by ID
+//Get single file by ID
 router.get('/:id', auth, getFileById);
 
-// POST /api/files - Create new file
+//Create new file
 router.post('/', auth, createFile);
 
-// PUT /api/files/:id - Update file
+//update file
 router.put('/:id', auth, updateFile);
 
-// DELETE /api/files/:id - Delete file
+//Delete file
 router.delete('/:id', auth, deleteFile);
 
 module.exports = router;

@@ -72,12 +72,16 @@ const Dashboard = () => {
         {user?.role === 'admin' ? (
           <>
             <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Total Users</h3>
+              <p className="text-3xl font-bold text-green-600">{stats?.total_users || 0}</p>
+            </div>
+            <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-medium text-gray-900 mb-2">Total Files</h3>
               <p className="text-3xl font-bold text-indigo-600">{stats?.total_files || 0}</p>
             </div>
             <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Total Users</h3>
-              <p className="text-3xl font-bold text-green-600">{stats?.total_users || 0}</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Uploaded Files</h3>
+              <p className="text-3xl font-bold text-green-600">{stats?.uploaded_files || 0}</p>
             </div>
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-medium text-gray-900 mb-2">Pending Files</h3>
@@ -119,7 +123,7 @@ const Dashboard = () => {
 
       {/* Recent Files */}
       <div className="bg-white rounded-lg shadow">
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-6 py-4 border-b border-gray-300">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-medium text-gray-900">Recent Files</h3>
             <Link
@@ -168,7 +172,7 @@ const Dashboard = () => {
       <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
         <Link
           to="/create-file"
-          className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg p-6 text-center transition-colors"
+          className="bg-gray-600 hover:bg-gray-700 text-white rounded-lg p-6 text-center transition-colors"
         >
           <div className="text-2xl font-bold mb-2">Create New File</div>
           <div className="text-indigo-200">Add a new file to the system</div>

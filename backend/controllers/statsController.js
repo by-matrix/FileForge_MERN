@@ -21,14 +21,14 @@ exports.getStats = async (req, res) => {
         status_breakdown: statusStats 
       });
     } else {
-      // Regular user stats
+      //user stats
       const assignedFiles = await File.countDocuments({ to: req.user.id });
       const uploadedFiles = await File.countDocuments({ uploadedBy: req.user.id });
 
       const statuses = ['Pending', 'In Progress', 'Completed', 'Reject', 'Archived', 'Urgent'];
       const statusStats = {};
 
-      // For regular users, show status breakdown for files assigned to them
+      //show status breakdown for files assigned to them
       for (let status of statuses) {
         statusStats[status] = await File.countDocuments({ 
           to: req.user.id, 

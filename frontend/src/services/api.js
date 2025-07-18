@@ -10,7 +10,7 @@ const api = axios.create({
   },
 });
 
-// Request interceptor to add authentication token
+//add authentication token
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -24,7 +24,7 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle authentication errors
+//handle authentication errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
