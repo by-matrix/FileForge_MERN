@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const dotenv = require('dotenv');
+const path = require('path');
 const connectDB = require('./config/database');
 
 const authRoutes = require('./routes/authRoutes');
@@ -15,10 +16,21 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
+// CORS configuration - allow both CLIENT_URL and same-origin requests
+const corsOptions = {
+  origin: [
+    process.env.CLIENT_URL,
+    `http://localhost:${PORT}`,
+    `https://localhost:${PORT}`
+  ].filter(Boolean), // Remove any undefined values
+  credentials: true
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 
+// API Routes (keep these BEFORE static file serving)
 app.use('/api/auth', authRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/api/notifications', notificationRoutes);
@@ -53,6 +65,15 @@ app.put('/api/files/:id', async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+});
+
+// Serve static files from React build (AFTER all API routes)
+app.use(express.static(path.join(__dirname, '../frontend/build')));
+
+// Handle React routing - return all non-API requests to React app
+// This must be the LAST route
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
 });
 
 connectDB().then(() => {
