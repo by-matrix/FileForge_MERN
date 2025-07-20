@@ -5,8 +5,6 @@ const dotenv = require('dotenv');
 const path = require('path');
 const connectDB = require('./config/database');
 
-const File = require('./models/File');
-
 const authRoutes = require('./routes/authRoutes');
 const fileRoutes = require('./routes/fileRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
@@ -18,14 +16,27 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// CORS configuration - allow both CLIENT_URL and same-origin requests
+// Fixed CORS configuration
 const corsOptions = {
-  origin: [
-    process.env.CLIENT_URL,
-    `http://localhost:${PORT}`,
-    `https://localhost:${PORT}`,
-    'https://*.up.railway.app' // Allow Railway subdomains
-  ].filter(Boolean),
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      process.env.CLIENT_URL,
+      `http://localhost:${PORT}`,
+      `https://localhost:${PORT}`,
+      'http://localhost:3000', // React dev server
+      'http://localhost:5173', // Vite dev server
+    ].filter(Boolean);
+    
+    // Allow Railway domains dynamically
+    if (origin.includes('.railway.app') || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 };
 
@@ -40,45 +51,36 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/users', userRoutes);
 
+// Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.put('/api/files/:id', async (req, res) => {
-  try {
-    const fileId = req.params.id;
-    const updateData = req.body;
-    
-    // Example for different databases:
-    
-    // For MongoDB with Mongoose:
-    const updatedFile = await File.findByIdAndUpdate(fileId, updateData, { new: true });
-    
-    // For PostgreSQL/MySQL with Sequelize:
-    // const updatedFile = await File.update(updateData, { where: { id: fileId } });
-    
-    // For raw SQL:
-    // const updatedFile = await db.query('UPDATE files SET ... WHERE id = ?', [fileId]);
-    
-    if (!updatedFile) {
-      return res.status(404).json({ error: 'File not found' });
-    }
-    
-    res.json({ message: 'File updated successfully', data: updatedFile });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
 // Serve static files from React build (AFTER all API routes)
-app.use(express.static(path.join(__dirname, '../frontend/dist')));
+app.use(express.static(path.join(__dirname, '../frontend/build')));
 
 // Handle React routing - return all non-API requests to React app
 // This must be the LAST route
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
+  res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
 });
 
+// Error handling middleware
+app.use((error, req, res, next) => {
+  console.error('Error:', error);
+  res.status(500).json({ 
+    message: 'Internal server error',
+    error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+  });
+});
+
+// Start server
 connectDB().then(() => {
-  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  });
+}).catch(error => {
+  console.error('Failed to connect to database:', error);
+  process.exit(1);
 });
