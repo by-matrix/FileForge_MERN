@@ -5,6 +5,8 @@ const dotenv = require('dotenv');
 const path = require('path');
 const connectDB = require('./config/database');
 
+const File = require('./models/File');
+
 const authRoutes = require('./routes/authRoutes');
 const fileRoutes = require('./routes/fileRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
@@ -21,8 +23,9 @@ const corsOptions = {
   origin: [
     process.env.CLIENT_URL,
     `http://localhost:${PORT}`,
-    `https://localhost:${PORT}`
-  ].filter(Boolean), // Remove any undefined values
+    `https://localhost:${PORT}`,
+    'https://*.up.railway.app' // Allow Railway subdomains
+  ].filter(Boolean),
   credentials: true
 };
 
@@ -68,12 +71,12 @@ app.put('/api/files/:id', async (req, res) => {
 });
 
 // Serve static files from React build (AFTER all API routes)
-app.use(express.static(path.join(__dirname, '../frontend/build')));
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
 // Handle React routing - return all non-API requests to React app
 // This must be the LAST route
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
+  res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
 });
 
 connectDB().then(() => {
